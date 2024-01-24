@@ -24,7 +24,8 @@ def generate_image():
         "Upgrade-Insecure-Requests": "1",
         "Origin": "https://m.photofunia.com",
         "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundaryotPXwBaV73aQcr07",
-        "User-Agent": "Mozilla/5.0 (Linux; Android 13; M2101K6G Build/TKQ1.221013.002) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.211 Mobile Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 10; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0",
+
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "X-Requested-With": "mark.via.gp",
         "Sec-Fetch-Site": "same-origin",

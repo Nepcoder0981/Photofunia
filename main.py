@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 import requests
-from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -47,26 +46,20 @@ Content-Disposition: form-data; name="text"
 
     # Fetch HTML content from the provided URL with custom headers and payload
     response = requests.post(url_parameter, headers=headers, data=payload)
-    html_content = response.text
 
-    # Extract canonical link
-    soup = BeautifulSoup(html_content, 'html.parser')
-    canonical_link = soup.find('link', {'rel': 'canonical'})
-
-    if canonical_link:
-        canonical_url = canonical_link.get('href')
-
-        # Extract image URL from canonical link
-        image_response = requests.get(canonical_url)
-        image_soup = BeautifulSoup(image_response.text, 'html.parser')
-        image_url = image_soup.find('img', {'src': True}).get('src')
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Extract image URL from the HTML response
+        image_start = response.text.find('<img src="') + len('<img src="')
+        image_end = response.text.find('"', image_start)
+        image_url = response.text[image_start:image_end]
 
         # Create JSON output with join parameter
         join_parameter = request.args.get('join', '@devsnp')
         result_json = {"generatedimage": image_url, "text": text_parameter, "join": join_parameter}
         return jsonify(result_json)
     else:
-        return jsonify({"error": "Canonical link not found in the response."}), 500
+        return jsonify({"error": f"Request failed with status code {response.status_code}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

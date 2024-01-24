@@ -35,7 +35,7 @@ def generate_image():
         "Referer": "https://m.photofunia.com/categories/all_effects/balloon",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9",
-        "Cookie": "_ga=GA1.2.175010173.1705225604; PHPSESSID=fias7o2dk6n9ctk4unactps5k7; accept_cookie=true; _gid=GA1.2.342766436.1705941396; _gat=1"
+        
     }
 
     # Define your custom payload

@@ -1,66 +1,65 @@
 from flask import Flask, request, jsonify
 import requests
+import json
 
 app = Flask(__name__)
 
 @app.route('/')
-def generate_image():
-    text_parameter = request.args.get('text', '')
-    url_parameter = request.args.get('url', '')
+def login():
+    uid = request.args.get('uid')
 
-    # Ensure the URL is provided
-    if not url_parameter:
-        return jsonify({"error": "URL parameter is required."}), 400
+    url = "https://shop.garena.sg/api/auth/player_id_login"
 
-    # Define your custom headers
     headers = {
-        "Host": "m.photofunia.com",
+        "Host": "shop.garena.sg",
         "Connection": "keep-alive",
-        "Content-Length": "140",
-        "Cache-Control": "max-age=0",
-        "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Android WebView";v="120"',
+        "Content-Length": "59",
+        "sec-ch-ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Android WebView\";v=\"120\"",
+        "accept": "application/json",
+        "content-type": "application/json",
+        "x-datadome-clientid": "1iAO5XRKKzGKRzlbwX3RmRBp3g88nhvf9frgmlC50g1IM0CykBhU1GApn5gbo~ELqOE4DTHoJmxcFOyzA11_qbIvXH9iHUFjSyviiWahl8bectrZ4yAq6GF0LSDee8f1",
         "sec-ch-ua-mobile": "?1",
-        "sec-ch-ua-platform": '"Android"',
-        "Upgrade-Insecure-Requests": "1",
-        "Origin": "https://m.photofunia.com",
-        "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundaryotPXwBaV73aQcr07",
-        "User-Agent": "Mozilla/5.0 (Linux; Android 10; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0",
-
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
+        "sec-ch-ua-platform": "\"Android\"",
+        "Origin": "https://shop.garena.sg",
         "X-Requested-With": "mark.via.gp",
         "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-User": "?1",
-        "Sec-Fetch-Dest": "document",
-        "Referer": "https://m.photofunia.com/categories/all_effects/balloon",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "Referer": "https://shop.garena.sg/app/100067/idlogin",
         "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9",
-        
+        "Accept-Language": "en-US,en;q=0.9,bn-BD;q=0.8,bn;q=0.7",
+        "Cookie": "source=mb; session_key=3qr7q8khs85nd10f1ctdr4omj8r9a7oa; datadome=sVt2ex3biH58PwDuPs7xI9a82paLvooX0JPcN3LJ~u7xIjMBKMjXzrc~CoijywCBBr9ms_3qpBhwPAmHfJuBLCD_777PyMHp6Bk_YKDzlEzjyx9iB0IGFBZ0nBSAC5xD"
     }
 
-    # Define your custom payload
-    payload = f"""------WebKitFormBoundaryotPXwBaV73aQcr07
-Content-Disposition: form-data; name="text"
+    data = {
+        "app_id": 100067,
+        "login_id": uid,
+        "app_server_id": 0
+    }
 
-{text_parameter}
-------WebKitFormBoundaryotPXwBaV73aQcr07--"""
+    response = requests.post(url, headers=headers, json=data)
 
-    # Fetch HTML content from the provided URL with custom headers and payload
-    response = requests.post(url_parameter, headers=headers, data=payload)
-
-    # Check if the request was successful
+    # Check if the request was successful (status code 200)
     if response.status_code == 200:
-        # Extract image URL from the HTML response
-        image_start = response.text.find('<img src="') + len('<img src="')
-        image_end = response.text.find('"', image_start)
-        image_url = response.text[image_start:image_end]
+        # Parse the JSON response
+        json_response = response.json()
 
-        # Create JSON output with join parameter
-        join_parameter = request.args.get('join', '@devsnp')
-        result_json = {"generatedimage": image_url, "text": text_parameter, "join": join_parameter}
-        return jsonify(result_json)
+        # Extract the desired fields
+        region = json_response.get("region", "")
+        nickname = json_response.get("nickname", "")
+
+        # Create a new dictionary with the desired fields
+        output_json = {"region": region, "nickname": nickname, "join": "-@devsnp"}
+
+        # Convert the dictionary to a JSON-formatted string with unescaped slashes
+        json_output = json.dumps(output_json, ensure_ascii=False)
+
+        # Return the modified JSON output
+        return json_output
     else:
-        return jsonify({"error": f"Request failed with status code {response.status_code}"}), 500
+        # Return an error message if the request was not successful
+        return jsonify({"error": f"Error: {response.status_code}, {response.text}"}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)

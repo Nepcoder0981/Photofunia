@@ -17,8 +17,6 @@ def login():
         "sec-ch-ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Android WebView\";v=\"120\"",
         "accept": "application/json",
         "content-type": "application/json",
-        "x-datadome-clientid": "1iAO5XRKKzGKRzlbwX3RmRBp3g88nhvf9frgmlC50g1IM0CykBhU1GApn5gbo~ELqOE4DTHoJmxcFOyzA11_qbIvXH9iHUFjSyviiWahl8bectrZ4yAq6GF0LSDee8f1",
-        "sec-ch-ua-mobile": "?1",
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
         "sec-ch-ua-platform": "\"Android\"",
         "Origin": "https://shop.garena.sg",

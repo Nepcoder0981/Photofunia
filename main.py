@@ -17,6 +17,8 @@ def login():
         "sec-ch-ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Android WebView\";v=\"120\"",
         "accept": "application/json",
         "content-type": "application/json",
+        "x-datadome-clientid": "1iAO5XRKKzGKRzlbwX3RmRBp3g88nhvf9frgmlC50g1IM0CykBhU1GApn5gbo~ELqOE4DTHoJmxcFOyzA11_qbIvXH9iHUFjSyviiWahl8bectrZ4yAq6GF0LSDee8f1",
+        "sec-ch-ua-mobile": "?1",
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
         "sec-ch-ua-platform": "\"Android\"",
         "Origin": "https://shop.garena.sg",
@@ -27,7 +29,7 @@ def login():
         "Referer": "https://shop.garena.sg/app/100067/idlogin",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9,bn-BD;q=0.8,bn;q=0.7",
-        
+        "Cookie": "source=mb; session_key=3qr7q8khs85nd10f1ctdr4omj8r9a7oa; datadome=sVt2ex3biH58PwDuPs7xI9a82paLvooX0JPcN3LJ~u7xIjMBKMjXzrc~CoijywCBBr9ms_3qpBhwPAmHfJuBLCD_777PyMHp6Bk_YKDzlEzjyx9iB0IGFBZ0nBSAC5xD"
     }
 
     data = {

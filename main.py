@@ -29,7 +29,7 @@ def login():
         "Referer": "https://shop.garena.sg/app/100067/idlogin",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9,bn-BD;q=0.8,bn;q=0.7",
-        "Cookie": "source=mb; session_key=3qr7q8khs85nd10f1ctdr4omj8r9a7oa; datadome=sVt2ex3biH58PwDuPs7xI9a82paLvooX0JPcN3LJ~u7xIjMBKMjXzrc~CoijywCBBr9ms_3qpBhwPAmHfJuBLCD_777PyMHp6Bk_YKDzlEzjyx9iB0IGFBZ0nBSAC5xD"
+        
     }
 
     data = {

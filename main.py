@@ -15,7 +15,7 @@ user_agents = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:95.0) Gecko/20100101 Firefox/95.0"
 ]
 
-def get_mediafire_download_link(url):
+def get_mediafire_download_info(url):
     try:
         headers = {
             "User-Agent": random.choice(user_agents),
@@ -24,19 +24,29 @@ def get_mediafire_download_link(url):
         }
         page = requests.get(url, headers=headers)
         soup = BeautifulSoup(page.content, 'html.parser')
-        download_link = soup.find('a', {'id': 'downloadButton'})['href']
-        return download_link
+        download_link_element = soup.find('a', {'id': 'downloadButton'})
+        download_link = download_link_element['href']
+        file_size_text = download_link_element.get_text(strip=True)
+        file_size = re.search(r'(\d+(\.\d+)?)MB', file_size_text)
+        if file_size:
+            file_size_mb = float(file_size.group(1))
+        else:
+            file_size_mb = None
+        return download_link, file_size_mb
     except Exception as e:
         print(f"Error: {str(e)}")
-        return None
+        return None, None
 
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url')
     if url:
-        direct_download_url = get_mediafire_download_link(url)
+        direct_download_url, file_size_mb = get_mediafire_download_info(url)
         if direct_download_url:
-            return jsonify({'direct_download_url': direct_download_url})
+            response_data = {'direct_download_url': direct_download_url}
+            if file_size_mb is not None:
+                response_data['file_size_mb'] = file_size_mb
+            return jsonify(response_data)
         else:
             return jsonify({'error': 'Direct download URL not found.'}), 404
     else:

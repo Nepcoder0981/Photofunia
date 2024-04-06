@@ -1,23 +1,25 @@
 from flask import Flask, request, jsonify
 import requests
+from bs4 import BeautifulSoup
 import re
 
 app = Flask(__name__)
 
-def get_direct_download_url(url):
-    res = requests.get(url, stream=True)
-    contents = res.text
-
-    for line in contents.splitlines():
-        m = re.search(r'href="((http|https)://download[^"]+)', line)
-        if m:
-            return m.group(1)
+def get_mediafire_download_link(url):
+    try:
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, 'html.parser')
+        download_link = soup.find('a', {'id': 'downloadButton'})['href']
+        return download_link
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return None
 
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url')
     if url:
-        direct_download_url = get_direct_download_url(url)
+        direct_download_url = get_mediafire_download_link(url)
         if direct_download_url:
             return jsonify({'direct_download_url': direct_download_url})
         else:

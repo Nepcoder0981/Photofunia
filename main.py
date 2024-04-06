@@ -21,6 +21,13 @@ def extract_download_link(html_content):
     else:
         return None
 
+def extract_file_size_mb(text):
+    file_size = re.search(r'(\d+(\.\d+)?)MB', text)
+    if file_size:
+        return float(file_size.group(1))
+    else:
+        return None
+
 def get_mediafire_download_info(url):
     try:
         headers = {
@@ -30,20 +37,25 @@ def get_mediafire_download_info(url):
         }
         page = requests.get(url, headers=headers)
         direct_download_url = extract_download_link(page.text)
+        file_size_text = page.text
+        file_size_mb = extract_file_size_mb(file_size_text)
         if not direct_download_url and 'Content-Disposition' in page.headers:
             direct_download_url = page.headers['Content-Disposition'].split('filename=')[1].strip('"')
-        return direct_download_url
+        return direct_download_url, file_size_mb
     except Exception as e:
         print(f"Error: {str(e)}")
-        return None
+        return None, None
 
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url')
     if url:
-        direct_download_url = get_mediafire_download_info(url)
+        direct_download_url, file_size_mb = get_mediafire_download_info(url)
         if direct_download_url:
-            return jsonify({'direct_download_url': direct_download_url})
+            response_data = {'direct_download_url': direct_download_url}
+            if file_size_mb is not None:
+                response_data['file_size_mb'] = file_size_mb
+            return jsonify(response_data)
         else:
             return jsonify({'error': 'Direct download URL not found.'}), 404
     else:

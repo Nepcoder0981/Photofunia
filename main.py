@@ -1,77 +1,65 @@
+import random
 from flask import Flask, request, jsonify
 import requests
 import re
-from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
-def get_download_link(songurl):
-    try:
-        initial_url = "https://spotifymate.com/"
-        response_initial = requests.get(initial_url)
-        response_initial.raise_for_status()
-        cookies = response_initial.cookies
-        soup_initial = BeautifulSoup(response_initial.text, 'html.parser')
-        hidden_inputs = soup_initial.select('form#get_video input[type=hidden]')
-        input_data = {}
-        for input_field in hidden_inputs:
-            input_name = input_field.get('name')
-            input_value = input_field.get('value')
-            if input_name and input_value:
-                input_data[input_name] = input_value
-        url_second = 'https://spotifymate.com/action'
-        data_second = {'url': songurl, **input_data}
-        response_second = requests.post(url_second,cookies=cookies,data=data_second)
-        response_second.raise_for_status()
-        second_soup = BeautifulSoup(response_second.text, 'html.parser')
-        download_div = second_soup.find('div', {'class': 'abuttons mb-0'})
-        if download_div and download_div.a:
-            download_link = download_div.a.get('href')
-            return download_link
-        else:
-            return None
-    except Exception as e:
+# List of user-agents
+user_agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36 Edg/96.0.1054.43",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36 OPR/86.0.4240.198",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:95.0) Gecko/20100101 Firefox/95.0"
+]
+
+def extract_download_link(html_content):
+    m = re.search(r'href="((http|https)://download[^"]+)', html_content)
+    if m:
+        return m.group(1)
+    else:
         return None
 
-@app.route('/')
-def get_spotify_download():
-    search_term = request.args.get('songname')
-    if search_term:
-        try:
-            url = "https://open.spotify.com/"
-            response = requests.get(url)
-            response.raise_for_status()
-            cookies = response.cookies
-            access_token = ''
-            if response.status_code == 200:
-                match = re.search(r'"accessToken":"([^"]+)"', response.text)
-                if match:
-                    access_token = match.group(1)
-                else:
-                    return jsonify({"error": "Failed to get access token"}), 500
-            else:
-                return jsonify({"error": "Failed to reach Spotify"}), 500
-            
-            url = "https://api-partner.spotify.com/pathfinder/v1/query"
-            headers = {"Content-Type": "application/json","Authorization": "Bearer " + access_token}
-            data = {"operationName": "searchDesktop","variables": {"searchTerm": search_term,"offset": 0,"limit": 10,"numberOfTopResults": 5,"includeAudiobooks": True},"extensions": {"persistedQuery": {"version":1,"sha256Hash":"a04b1320754996f10f3b4ceea825fa7c4ba5c76b7d1c8603a0be350783d8f709"}}}
-            response = requests.post(url, json=data, headers=headers, cookies=cookies)
-            response.raise_for_status()
-            match = re.search(r'"spotify:track:(.*?)"', response.text)
-            uri_value = match.group(1)
-            max_attempts = 2
-            url = 'https://open.spotify.com/track/' + uri_value
-            for attempt in range(1, max_attempts + 1):
-                download_link = get_download_link(url)
-                text_to_remove = 'SpotifyMate.com%20-%20'
-                if text_to_remove in download_link:
-                    download_link = download_link.replace(text_to_remove, '')
-                if download_link:
-                    return jsonify({"download_link": download_link})
-        except Exception as e:
-            return jsonify({"error": "Failed to fetch download link"}), 500
-    return jsonify({"error": "Missing or invalid songname parameter"}), 400
+def extract_file_size_mb(text):
+    file_size = re.search(r'(\d+(\.\d+)?)MB', text)
+    if file_size:
+        return float(file_size.group(1))
+    else:
+        return None
+
+def get_mediafire_download_info(url):
+    try:
+        headers = {
+            "User-Agent": random.choice(user_agents),
+            "Referer": url,
+            "Useganet": "true"
+        }
+        page = requests.get(url, headers=headers)
+        direct_download_url = extract_download_link(page.text)
+        file_size_text = page.text
+        file_size_mb = extract_file_size_mb(file_size_text)
+        if not direct_download_url and 'Content-Disposition' in page.headers:
+            direct_download_url = page.headers['Content-Disposition'].split('filename=')[1].strip('"')
+        return direct_download_url, file_size_mb
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return None, None
+
+@app.route('/download', methods=['GET'])
+def download():
+    url = request.args.get('url')
+    if url:
+        direct_download_url, file_size_mb = get_mediafire_download_info(url)
+        if direct_download_url:
+            response_data = {'direct_download_url': direct_download_url}
+            if file_size_mb is not None:
+                response_data['file_size_mb'] = file_size_mb
+            return jsonify(response_data)
+        else:
+            return jsonify({'error': 'Direct download URL not found.'}), 404
+    else:
+        return jsonify({'error': 'URL parameter is required.'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
-    

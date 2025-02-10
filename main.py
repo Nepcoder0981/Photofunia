@@ -11,9 +11,11 @@ CORS(app)
 def generate_image():
     if request.method == 'GET':
         prompt = request.args.get('prompt')
+        size = request.args.get('size', '1_1')  # Default size
     else:  # POST method
         data = request.get_json()
         prompt = data.get('prompt') if data else None
+        size = data.get('size', '1_1')  # Default size
 
     if not prompt:
         return Response("Prompt parameter is missing.", status=400, mimetype='text/plain')
@@ -31,7 +33,7 @@ def generate_image():
         "isPublic": False,
         "model": "flux_1_schnell",
         "prompt": prompt,
-        "size": "1_1"  # Increased size
+        "size": size  # Increased size
     }
 
     # Define the URL to send the request to

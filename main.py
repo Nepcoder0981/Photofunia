@@ -1,61 +1,57 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request, Response
+from flask_cors import CORS
 import requests
-from bs4 import BeautifulSoup
 import json
+import base64
 
 app = Flask(__name__)
+CORS(app)
 
-@app.route('/sms/<number>')
-def scrape_messages(number):
-    # Define the URL using the provided phone number
-    url = f"https://receive-smss.com/sms/{number}/"
+@app.route('/generate-image', methods=['GET', 'POST'])
+def generate_image():
+    if request.method == 'GET':
+        prompt = request.args.get('prompt')
+    else:  # POST method
+        data = request.get_json()
+        prompt = data.get('prompt') if data else None
 
-    # Define the headers
+    if not prompt:
+        return Response("Prompt parameter is missing.", status=400, mimetype='text/plain')
+
+    # Define the headers and payload
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Referer": f"https://receive-smss.com/sms/{number}/",
-        "Sec-Ch-Ua": "\"Chromium\";v=\"124\", \"Brave\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": "\"Windows\"",
-        "Sec-Fetch-Dest": "document",
+        "accept": "application/json, text/plain, */*",
+        "content-type": "application/json",
+        "origin": "https://fastflux.co",
+        "referer": "https://fastflux.co/",
+        "user-agent": "Mozilla/5.0"
     }
 
-    # Send a GET request to the URL
-    response = requests.get(url, headers=headers)
+    payload = {
+        "isPublic": False,
+        "model": "flux_1_schnell",
+        "prompt": prompt,
+        "size": "1_1"  # Increased size
+    }
 
-    # Parse the HTML content
-    soup = BeautifulSoup(response.content, 'html.parser')
+    # Define the URL to send the request to
+    url = "https://api.fastflux.co/v1/images/generate"
 
-    # Find all message details
-    messages = soup.find_all('div', class_='message_details')
+    # Send the POST request to the FastFlux API
+    response = requests.post(url, headers=headers, json=payload)
 
-    # Initialize a list to store extracted data
-    data = []
-
-    # Loop through each message detail
-    for message in messages:
-        sender = message.find('div', class_='senderr').a.text
-        # Check if the message text starts with "Message" and remove it if it does
-        message_text = message.find('div', class_='msgg').text
-        if message_text.startswith("Message"):
-            message_text = message_text[len("Message"):].strip()
-        message_time = message.find('div', class_='time').text
-        # Check if the time starts with "Time" and remove it if it does
-        if message_time.startswith("Time"):
-            message_time = message_time[len("Time"):].strip()
-        data.append({
-            'sender': sender,
-            'message': message_text,
-            'time': message_time
-        })
-
-    # Convert the data to JSON format with unescaped slashes
-    json_data = json.dumps(data, ensure_ascii=False)
-
-    # Return the data as JSON
-    return json_data
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+        if "result" in data and data["result"].startswith("data:image/png;base64,"):
+            # Extract base64 image data
+            image_data = data["result"].split(",", 1)[1]
+            image_binary = base64.b64decode(image_data)
+            return Response(image_binary, mimetype='image/png')
+        else:
+            return Response("Invalid image data received.", status=500, mimetype='text/plain')
+    else:
+        return Response(f"Error: {response.text}", status=response.status_code, mimetype='text/plain')
 
 if __name__ == '__main__':
     app.run(debug=True)
-    

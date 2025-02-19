@@ -12,10 +12,12 @@ def generate_image():
     if request.method == 'GET':
         prompt = request.args.get('prompt')
         size = request.args.get('size', '1_1')  # Default size
+        model = request.args.get('model', 'flux_1_schnell')  # Default model
     else:  # POST method
         data = request.get_json()
         prompt = data.get('prompt') if data else None
         size = data.get('size', '1_1')  # Default size
+        model = data.get('model', 'flux_1_schnell')  # Default model
 
     if not prompt:
         return Response("Prompt parameter is missing.", status=400, mimetype='text/plain')
@@ -31,9 +33,9 @@ def generate_image():
 
     payload = {
         "isPublic": False,
-        "model": "flux_1_schnell",
+        "model": model,
         "prompt": prompt,
-        "size": size  # Increased size
+        "size": size
     }
 
     # Define the URL to send the request to

@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 import json
@@ -20,7 +20,7 @@ def generate_image():
         model = data.get('model', 'flux_1_schnell')  # Default model
 
     if not prompt:
-        return Response("Prompt parameter is missing.", status=400, mimetype='text/plain')
+        return jsonify({"error": "Prompt parameter is missing."}), 400
 
     # Define the headers and payload
     headers = {
@@ -50,12 +50,11 @@ def generate_image():
         if "result" in data and data["result"].startswith("data:image/png;base64,"):
             # Extract base64 image data
             image_data = data["result"].split(",", 1)[1]
-            image_binary = base64.b64decode(image_data)
-            return Response(image_binary, mimetype='image/png')
+            return jsonify({"image_base64": image_data})
         else:
-            return Response("Invalid image data received.", status=500, mimetype='text/plain')
+            return jsonify({"error": "Invalid image data received."}), 500
     else:
-        return Response(f"Error: {response.text}", status=response.status_code, mimetype='text/plain')
+        return jsonify({"error": response.text}), response.status_code
 
 if __name__ == '__main__':
     app.run(debug=True)

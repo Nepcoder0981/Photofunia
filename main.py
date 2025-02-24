@@ -9,15 +9,20 @@ CORS(app)
 
 @app.route('/generate-image', methods=['GET', 'POST'])
 def generate_image():
+    prompt = None
+    size = '1_1'  # Default size
+    model = 'flux_1_schnell'  # Default model
+
     if request.method == 'GET':
         prompt = request.args.get('prompt')
-        size = request.args.get('size', '1_1')  # Default size
-        model = request.args.get('model', 'flux_1_schnell')  # Default model
-    else:  # POST method
+        size = request.args.get('size', size)
+        model = request.args.get('model', model)
+    elif request.method == 'POST':
         data = request.get_json()
-        prompt = data.get('prompt') if data else None
-        size = data.get('size', '1_1')  # Default size
-        model = data.get('model', 'flux_1_schnell')  # Default model
+        if data:
+            prompt = data.get('prompt', prompt)
+            size = data.get('size', size)
+            model = data.get('model', model)
 
     if not prompt:
         return jsonify({"error": "Prompt parameter is missing."}), 400

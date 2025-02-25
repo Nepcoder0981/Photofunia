@@ -66,7 +66,43 @@ def generate_image():
         else:
             return jsonify({"error": response.text}), response.status_code
 
+    elif model == 'flux':
+        # API request for normal flux model using multipart/form-data
+        headers = {
+            "accept": "application/json, text/plain, */*",
+            "Authorization": "Bearer c3bcde3f-134e-437c-b771-fea1dc5ab86a",  # Add the correct Bearer token here
+            "origin": "https://freeflux.ai",
+            "referer": "https://freeflux.ai/",
+            "user-agent": "Mozilla/5.0"
+        }
+
+        # Multipart form-data payload
+        data = {
+            "prompt": prompt,
+            "model": "flux_1_schnell",  # or any other model
+            "size": size,
+            "lora": None,
+            "style": "no_style",
+            "color": "no_color",
+            "lighting": "no_lighting",
+            "composition": None
+        }
+
+        # Prepare the form-data using a proper library like `requests`
+        response = requests.post("https://api.freeflux.ai/v1/images/generate", headers=headers, data=data)
+
+        if response.status_code == 200:
+            data = response.json()
+            if "result" in data and data["result"].startswith("data:image/png;base64,"):
+                image_data = data["result"].split(",", 1)[1]
+                return jsonify({"image_base64": image_data})
+            else:
+                return jsonify({"error": "Invalid image data received."}), 500
+        else:
+            return jsonify({"error": response.text}), response.status_code
+
     else:
+        # Default API request (flux_1_schnell or other models)
         headers = {
             "accept": "application/json, text/plain, */*",
             "content-type": "application/json",

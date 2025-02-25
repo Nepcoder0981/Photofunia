@@ -26,20 +26,19 @@ def generate_image():
     if not prompt:
         return jsonify({"error": "Prompt parameter is missing."}), 400
 
-    # Check the model and send request accordingly
     if model == 'techcoderai':
         url = f"https://fast-flux-demo.replicate.workers.dev/api/generate-image?text={prompt}"
         response = requests.get(url)
 
         if response.status_code == 200:
-            base64_image = base64.b64encode(response.content).decode('utf-8')
+            image_data = response.content
+            base64_image = base64.b64encode(image_data).decode('utf-8')
             return jsonify({"image_base64": base64_image})
         else:
             return jsonify({"error": response.text}), response.status_code
 
     elif model == 'logogen':
-        # Logogen API request
-        url = "https://api.freeflux.ai/v1/images/generate"
+        # API request for logogen model
         headers = {
             "accept": "application/json, text/plain, */*",
             "content-type": "application/json",
@@ -47,10 +46,13 @@ def generate_image():
             "referer": "https://freeflux.ai/",
             "user-agent": "Mozilla/5.0"
         }
+
         payload = {
             "prompt": prompt,
             "logo": True
         }
+
+        url = "https://api.freeflux.ai/v1/images/generate"
 
         response = requests.post(url, headers=headers, json=payload)
 
@@ -65,8 +67,6 @@ def generate_image():
             return jsonify({"error": response.text}), response.status_code
 
     else:
-        # Default API request (flux_1_schnell or other models)
-        url = "https://api.fastflux.co/v1/images/generate"
         headers = {
             "accept": "application/json, text/plain, */*",
             "content-type": "application/json",
@@ -74,12 +74,15 @@ def generate_image():
             "referer": "https://fastflux.co/",
             "user-agent": "Mozilla/5.0"
         }
+
         payload = {
             "isPublic": False,
             "model": model,
             "prompt": prompt,
             "size": size
         }
+
+        url = "https://api.fastflux.co/v1/images/generate"
 
         response = requests.post(url, headers=headers, json=payload)
 
